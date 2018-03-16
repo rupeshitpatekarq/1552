@@ -15,19 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v2.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.cloud.bigtable.util.RowKeyWrapper;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableRangeSet;
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.List;
+
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
@@ -41,6 +35,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.google.bigtable.v2.RowFilter;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
+import com.google.cloud.bigtable.util.RowKeyWrapper;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestFilterListAdapter {
@@ -231,4 +235,12 @@ public class TestFilterListAdapter {
     return filterAdapter.adaptFilter(emptyScanContext, filter).get();
   }
 
+  @Test
+  public void testTimestampRangeFilterWithMaxVal() throws IOException {
+	  FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,
+		        new TimestampRangeFilter(10L, Integer.MAX_VALUE),
+		        new FamilyFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value"))));
+	    TimestampRangeFilter expected = new TimestampRangeFilter(10L, Integer.MAX_VALUE);  
+	    Assert.assertEquals(expected, filterList.getFilters().get(0));
+  }
 }
